@@ -1,0 +1,95 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+
+@section Scripts
+{
+    <link rel="stylesheet" type="text/css" href="https://cdn3.devexpress.com/jslib/21.2.6/css/dx.common.css" />
+    <link rel="stylesheet" type="text/css" href="https://cdn3.devexpress.com/jslib/21.2.6/css/dx.light.css" />
+    <script src="~/lib/microsoft/signalr/dist/browser/signalr.min.js"></script>
+    <script type="text/javascript">
+        var connection = new signalR.HubConnectionBuilder()
+            .withUrl("https://localhost:44379/HubService").build();
+
+        $('#conStatus').text(connection.connectionState);
+
+
+        connection.start().then(() => {
+            $('#loading').hide();
+            $('#conStatus').text(connection.state);
+        }).catch((err) => { console.log(err) });
+
+        // Yeniden bağlanma girişimlerini başlatmadan önce
+        connection.onreconnecting(err => {
+            $('#loading').show();
+            $("#conStatus").text(connection.state);
+            console.log("onreconnection:" + err);
+        });
+        connection.onreconnected(connectionId = > {
+            $("#loading").hide();
+            $('#conStatus').text(connection.state);
+            console.log("onreconnected:" + connectionId);
+        });
+
+        connection.onclose(() => {
+            $("#loading").hide();
+            $("#conStatus").text(connection.state);
+            console.log("onreconnected:" + connectionId)
+        });
+
+        var json = [];
+        connection.on('UserList', (name) => {
+            Json.length = 0;
+            for (const s of name) {
+                console.log(s);
+                var feed = { UserName: s.userName, id: s.id };
+                json.push(feed);
+                $("#gridContainer").dxDataGrid("refresh");
+            }
+        });
+
+        const dataGrid = $('#gridContainer').dxDataGrid({
+            dataSource: json,
+            paging: {
+                pageSize: 5,
+            },
+            pager: {
+                visible: true,
+                allowedPageSizes: [5, 10, 'all'],
+                showPagesizeSelector: true,
+                showInfo: true,
+                showNavigationButtons: true,
+
+            },
+            columns: ['Name', 'Id'],
+            showBorders: true
+        }).dxDataGrid('instance');
+
+
+    </script>
+}
+<div class="container ">
+    <div class="row ">
+        <div class="col-md-8 offset-8 ">
+            <input type="text" id="txtname" class="form-control" />
+            <hr />
+            <button class="btn btn-primary" id="btnInsert">Kaydet</button>
+            <div class="alert alert-info">
+                <div class="float-left ">
+                    Baglanta Durumu : <strong id="conStatus"></strong>
+                </div>
+                <div class="float-right" id="loading">
+                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                    <span class="sr-only">Loading ...</span>
+                </div>
+                <div class="clearfix"></div>
+            </div>
+        </div>
+    </div>
+    <div>
+        <div class="demo-container">
+            <div id="gauge"></div>
+            <div id="gridContainer"></div>
+        </div>
+    </div>
+
